@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>מרחק נסיעה</title>
+<meta name="theme-color" content="#14171c">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171c;
+    --surface:#1c2028;
+    --surface-2:#242a34;
+    --line:#2e3644;
+    --amber:#ffb020;
+    --text:#f2f0ea;
+    --text-dim:#8a8f98;
+    --green:#4ade80;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse at top, rgba(255,176,32,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Heebo', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%;
+    max-width:440px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .header{
+    padding:28px 28px 20px;
+    border-bottom:1px dashed var(--line);
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--amber);
+    font-weight:700;
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:6px;height:6px;border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 0 4px rgba(255,176,32,0.15);
+  }
+  h1{ font-size:24px; font-weight:900; }
+  .route{ padding:24px 28px; display:flex; flex-direction:column; }
+  .field{ position:relative; display:flex; align-items:flex-start; gap:14px; }
+  .track{ display:flex; flex-direction:column; align-items:center; padding-top:14px; flex-shrink:0; }
+  .dot{ width:12px;height:12px; border-radius:50%; border:2px solid var(--amber); background:var(--surface); flex-shrink:0; }
+  .dot.dest{ border-color:var(--green); }
+  .dash{
+    width:2px; flex:1; min-height:38px;
+    background-image:linear-gradient(var(--line) 60%, transparent 40%);
+    background-size:2px 10px; background-repeat:repeat-y; margin:2px 0;
+  }
+  .field-body{ flex:1; padding-bottom:22px; }
+  label{ display:block; font-size:11px; color:var(--text-dim); letter-spacing:0.06em; margin-bottom:6px; font-weight:500; }
+  input[type="text"]{
+    width:100%; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:10px; padding:12px 14px; color:var(--text);
+    font-family:'Heebo', sans-serif; font-size:15px; outline:none;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  input[type="text"]::placeholder{ color:#565c68; }
+  input[type="text"]:focus{ border-color:var(--amber); background:#20262f; }
+  input[type="text"]:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+  .origin-lock{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .edit-link{
+    background:none; border:none; color:var(--amber); font-size:12px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+    font-family:'Heebo', sans-serif; padding:2px;
+  }
+  .origin-static{
+    font-size:15px; color:var(--text); padding:12px 14px;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+  }
+  button.go{
+    width:100%; margin-top:6px; background:var(--amber); color:#1a1400;
+    border:none; border-radius:10px; padding:14px; font-size:15px; font-weight:700;
+    font-family:'Heebo', sans-serif; cursor:pointer;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  button.go:hover{ filter:brightness(1.08); }
+  button.go:active{ transform:scale(0.99); }
+  button.go:disabled{ background:var(--surface-2); color:var(--text-dim); cursor:not-allowed; }
+  button.go:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .result{
+    margin:0 28px 28px; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:14px; padding:20px; text-align:center; display:none;
+  }
+  .result.show{ display:block; }
+  .result .km{
+    font-family:'JetBrains Mono', monospace; font-size:40px; font-weight:700;
+    color:var(--green); line-height:1; letter-spacing:-0.02em;
+  }
+  .result .km span{ font-size:16px; color:var(--text-dim); margin-right:6px; }
+  .result .note{ margin-top:8px; font-size:12px; color:var(--text-dim); }
+  .status{ margin:0 28px 20px; font-size:13px; color:var(--text-dim); min-height:18px; }
+  .status.error{ color:#f87171; }
+  footer{ padding:14px 28px; border-top:1px dashed var(--line); font-size:11px; color:#565c68; text-align:center; }
+  @media (prefers-reduced-motion: no-preference){ .dot.pulse{ animation:pulse 1.4s ease-in-out infinite; } }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(74,222,128,0.35); }
+    50%{ box-shadow:0 0 0 6px rgba(74,222,128,0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="eyebrow">מחשבון מרחק</div>
+    <h1>כמה קילומטרים לשם?</h1>
+  </div>
+
+  <div class="route">
+    <div class="field">
+      <div class="track">
+        <div class="dot" id="originDot"></div>
+        <div class="dash"></div>
+      </div>
+      <div class="field-body">
+        <div class="origin-lock">
+          <label for="originInput">כתובת מוצא (קבועה)</label>
+          <button class="edit-link" id="editOrigin" type="button">שינוי</button>
+        </div>
+        <div class="origin-static" id="originStatic">לא הוגדרה כתובת — לחץ "שינוי"</div>
+        <input type="text" id="originInput" placeholder="לדוגמה: הרצל 10, תל אביב" style="display:none;">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="track"><div class="dot dest pulse" id="destDot"></div></div>
+      <div class="field-body">
+        <label for="destInput">כתובת יעד</label>
+        <input type="text" id="destInput" placeholder="לאן נוסעים?">
+      </div>
+    </div>
+
+    <button class="go" id="calcBtn" type="button">חשב מרחק נסיעה</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="result" id="result">
+    <div class="km"><span id="kmValue">0</span><span>ק״מ</span></div>
+    <div class="note" id="resultNote">מרחק נסיעה בפועל</div>
+  </div>
+
+  <footer>מחושב דרך Google Distance Matrix API (שרת Flask)</footer>
+</div>
+
+<script>
+  const originStatic = document.getElementById('originStatic');
+  const originInput = document.getElementById('originInput');
+  const editOrigin = document.getElementById('editOrigin');
+  const destInput = document.getElementById('destInput');
+  const calcBtn = document.getElementById('calcBtn');
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+  const kmValue = document.getElementById('kmValue');
+  const resultNote = document.getElementById('resultNote');
+
+  let originAddress = "";
+
+  function setStatus(msg, isError){
+    status.textContent = msg || "";
+    status.className = "status" + (isError ? " error" : "");
+  }
+
+  editOrigin.addEventListener('click', () => {
+    originInput.style.display = "block";
+    originStatic.style.display = "none";
+    originInput.value = originAddress;
+    originInput.focus();
+  });
+
+  originInput.addEventListener('blur', () => {
+    if(originInput.value.trim()){
+      originAddress = originInput.value.trim();
+      originStatic.textContent = originAddress;
+      originInput.style.display = "none";
+      originStatic.style.display = "block";
+    }
+  });
+  originInput.addEventListener('keydown', (e) => { if(e.key === "Enter") originInput.blur(); });
+
+  async function fetchDistance(origin, destination){
+    const res = await fetch("/api/distance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ origin, destination })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      throw new Error(data.error || "שגיאה בחישוב המרחק");
+    }
+    return data;
+  }
+
+  calcBtn.addEventListener('click', async () => {
+    result.classList.remove('show');
+    const dest = destInput.value.trim();
+
+    if(!originAddress){ setStatus("קודם הגדר כתובת מוצא", true); return; }
+    if(!dest){ setStatus("הזן כתובת יעד", true); destInput.focus(); return; }
+
+    calcBtn.disabled = true;
+    calcBtn.textContent = "מחשב...";
+    setStatus("מחשב מסלול נסיעה...");
+
+    try{
+      const data = await fetchDistance(originAddress, dest);
+      kmValue.textContent = data.km.toFixed(1);
+      resultNote.textContent = `כ-${data.duration} נסיעה`;
+      result.classList.add('show');
+      setStatus("");
+    }catch(err){
+      setStatus(err.message || "משהו השתבש, נסה שוב", true);
+    }finally{
+      calcBtn.disabled = false;
+      calcBtn.textContent = "חשב מרחק נסיעה";
+    }
+  });
+
+  destInput.addEventListener('keydown', (e) => { if(e.key === "Enter") calcBtn.click(); });
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
