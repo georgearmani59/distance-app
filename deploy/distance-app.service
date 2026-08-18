@@ -1,0 +1,13 @@
+[Unit]
+Description=Distance App
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/distance-app
+EnvironmentFile=/opt/distance-app/.env
+ExecStart=/opt/distance-app/venv/bin/gunicorn -w 2 -b 0.0.0.0:5002 app:app
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
